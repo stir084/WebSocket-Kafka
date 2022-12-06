@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Websocket Tutorial</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no"/><link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css'><link rel="stylesheet" href="./css/style.css">
+
+</head>
+<body>
+<div id="container">
+    <main>
+        <ul id="chat">
+        </ul>
+        <footer>
+            <!--<textarea id="opinion" placeholder="Type your message" onkeyup="enterkey()"></textarea>-->
+            <input id="opinion" type="text" onkeyup="enterkey()" style="width: 100%;height: 25px;">
+            <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/ico_picture.png" alt="">
+            <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1940306/ico_file.png" alt="">
+        </footer>
+    </main>
+</div>
+<!-- partial -->
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script><script  src="./js/script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+</body>
+<script th:inline="javascript">
+
+    const username = [[${name}]];
+
+    const websocket = new WebSocket("ws://localhost:8080/ws/chat");
+    websocket.onmessage = onMessage;
+    websocket.onopen = onOpen;
+    websocket.onclose = onClose;
+
+    let isSeeing = true;
+    document.addEventListener("visibilitychange", function() {
+        console.log(document.visibilityState);
+        if(document.visibilityState == "hidden"){
+            isSeeing = false;
+        }else{
+            isSeeing = true;
+        }
+    });
+
+    var newExcitingAlerts = (function () {
+        var oldTitle = document.title;
+        var msg = "★Message!★";
+        var timeoutId;
+        var blink = function() { document.title = document.title == msg ? ' ' : msg;
+            if(isSeeing == true){
+                clear();
+            }
+        };
+        var clear = function() {
+            clearInterval(timeoutId);
+            document.title = oldTitle;
+            window.onmousemove = null;
+            timeoutId = null;
+        };
+        return function () {
+            if (!timeoutId) {
+                timeoutId = setInterval(blink, 1000);
+            }
+        };
+    }());
+
+    setInterval(() => console.log(new Date()), 10000); //prevent chrome refresh
+
+    $(document).ready(function(){
+        $(".floating-chat").click();
+
+        $("#disconn").on("click", (e) => {
+            disconnect();
+        })
+
+        $("#button-send").on("click", (e) => {
+            send();
+        });
+    })
+
+    function enterkey(){
+        if (window.event.keyCode == 13) {
+            send();
+        }
+    }
+    function send(){
+        console.log(username + ":" + $("#opinion").val());
+        if($("#opinion").val() != ""){
+            websocket.send(username + ":" + $("#opinion").val());
+            $("#opinion").val('');
+        }
+    }
+
+    function onClose(evt) {
+        var str = username + ": 님이 방을 나가셨습니다.";
+        websocket.send(str);
+    }
+
+    function onOpen(evt) {
+        var str = username + ": 님이 입장하셨습니다.";
+        websocket.send(str);
+    }
+
+    function onMessage(msg) {
+        var data = msg.data;
+        var sessionId = null;
+        var message = null;
+        var arr = data.split(":");
+
+        for(var i=0; i<arr.length; i++){
+            console.log('arr[' + i + ']: ' + arr[i]);
+        }
+
+        var cur_session = username;
+
+        console.log("cur_session : " + cur_session);
+
+
+        sessionId = arr[0];
+        message = arr[1];
+
+        console.log("sessionID : " + sessionId);
+        console.log("cur_session : " + cur_session);
+
+
+        if(message == " 님이 입장하셨습니다."){
+            message = sessionId + "님이 입장하셨습니다.";
+        }
+        if(message == undefined){
+            message = "채팅이 종료되었습니다.";
+        }
+        const date = new Date();
+        let hour = date.getHours() < 10 ? `0${date.getHours()}` : date.getHours();
+        let min = date.getMinutes() < 10 ? `0${date.getMinutes()}` : date.getMinutes();
+        let amOrPm;
+        if(hour >= 12){
+            amOrPm = "PM"
+        }else{
+            amOrPm = "AM"
+        }
+
+        if(sessionId == cur_session){
+            var str = "<li class='me'>  <div class='entete'>\n" +
+                "<h3>" + hour + ":" + min + " " + amOrPm + "</h3>\n" +
+                "<h2>" + sessionId + "</h2>\n" +
+                "</div><div class='triangle'></div><div class='message'>";
+            str += message;
+            str += "</div></li>";
+            $("#chat").append(str);
+        }
+        else{
+            var str = "<li class='you'>  <div class='entete'>\n" +
+                "<h3>" + hour + ":" + min + " " + amOrPm + "</h3>\n" +
+                "<h2>" + sessionId + "</h2>\n" +
+                "</div><div class='triangle'></div><div class='message'>";
+            str += message;
+            str += "</div></li>";
+            $("#chat").append(str);
+
+            if(isSeeing == false){
+                newExcitingAlerts();
+            }
+        }
+
+        document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+    }
+</script>
+</html>

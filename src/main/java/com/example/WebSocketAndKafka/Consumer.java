@@ -62,10 +62,10 @@ public class Consumer {
     }
 
     @KafkaListener(topics="${spring.kafka.template.default-topic}")
-    public void consume(@Headers MessageHeaders headers, @Payload String payload) {
-        log.info("CONSUME HEADERS : " + headers.toString());
-        log.info("CONSUME PAYLOAD : " + payload);
-        customWebSocketHandler.sendMessageToAll(payload);
+    public void consume(@Headers MessageHeaders headers, @Payload String payload) throws Exception {
+        //log.info("CONSUME HEADERS : " + headers.toString());
+        //log.info("CONSUME PAYLOAD : " + payload);
+        customWebSocketHandler.sendMessage(payload);
     }
 
 }
