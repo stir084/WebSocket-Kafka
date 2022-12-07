@@ -102,6 +102,8 @@
         websocket.send(str);
     }
 
+    let cachedTime;
+    let cachedSessionId;
     function onMessage(msg) {
         var data = msg.data;
         var sessionId = null;
@@ -139,21 +141,27 @@
         }else{
             amOrPm = "AM"
         }
+        let currentTime = hour + ":" + min + " " + amOrPm;
+
+        let userIdAndTimeHtml;
+        if(cachedSessionId != sessionId || cachedTime != currentTime){
+            userIdAndTimeHtml = "<div class='entete'>\n<h3>" + currentTime + "</h3>\n<h2>" + sessionId + "</h2>\n</div>"
+        }else{
+            userIdAndTimeHtml = "";
+        }
 
         if(sessionId == cur_session){
-            var str = "<li class='me'>  <div class='entete'>\n" +
-                "<h3>" + hour + ":" + min + " " + amOrPm + "</h3>\n" +
-                "<h2>" + sessionId + "</h2>\n" +
-                "</div><div class='triangle'></div><div class='message'>";
+            var str = "<li class='me'>" +
+                userIdAndTimeHtml +
+                "<div class='message'>";
             str += message;
             str += "</div></li>";
             $("#chat").append(str);
         }
         else{
-            var str = "<li class='you'>  <div class='entete'>\n" +
-                "<h3>" + hour + ":" + min + " " + amOrPm + "</h3>\n" +
-                "<h2>" + sessionId + "</h2>\n" +
-                "</div><div class='triangle'></div><div class='message'>";
+            var str = "<li class='you'>" +
+                userIdAndTimeHtml +
+                "<div class='message'>";
             str += message;
             str += "</div></li>";
             $("#chat").append(str);
@@ -162,6 +170,9 @@
                 newExcitingAlerts();
             }
         }
+
+        cachedSessionId = sessionId;
+        cachedTime = currentTime;
 
         document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
     }
